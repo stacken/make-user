@@ -2,6 +2,7 @@
 
 import pprint
 import json
+import sys
 from optparse import OptionParser
 
 finger = "/afs/stacken.kth.se/home/stacken/Private/finger.json"
@@ -26,6 +27,13 @@ if options.username:
     for user in data:
         if user.get('användarnamn', None) == options.username:
             if options.field:
-                print(user.get(options.field, ""))
+                if user.get(options.field, None):
+                    print(user[options.field])
+                    sys.exit(0)
+                else:
+                    sys.exit(1)
             else:
                 print(user)
+                sys.exit(0)
+
+sys.exit(1)
