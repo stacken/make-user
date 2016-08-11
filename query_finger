@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+
+import pprint
+import json
+from optparse import OptionParser
+
+finger = "/afs/stacken.kth.se/home/stacken/Private/finger.json"
+
+fd = open(finger, 'r')
+data = json.load(fd)
+
+parser = OptionParser()
+parser.add_option("-u", "--username",
+        dest="username",
+        default=None,
+        help="Username",
+        metavar="USER")
+parser.add_option("-f", "--field",
+        dest="field",
+        default=None,
+        help="Select field",
+        metavar="FIELD")
+(options, args) = parser.parse_args()
+
+if options.username:
+    for user in data:
+        if user.get('användarnamn', None) == options.username:
+            if options.field:
+                print(user.get(options.field, ""))
+            else:
+                print(user)
