@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+import pprint
+import json
+import re
+
+finger = "/afs/stacken.kth.se/home/stacken/Private/finger.txt"
+
+i=0
+people=[]
+for line in open(finger, 'rb'):
+    if i > 0:
+
+        jsn = {}
+
+        dl = str(line, 'iso-8859-1').strip()
+        spl = dict(enumerate(dl.split(';')))
+
+        if spl.get(0, None):
+            jsn["efternamn"]     = spl.get(0,"")
+        if spl.get(1, None):
+            jsn["förnamn"]       = spl.get(1,"")
+        if spl.get(2, None):
+            jsn["sortering"]     = spl.get(2,"")
+        if spl.get(3, None):
+            jsn["titel"]         = spl.get(3,"")
+        if spl.get(4, None):
+            jsn["c/o"]           = spl.get(4,"")
+        if spl.get(5, None):
+            jsn["avdelning"]     = spl.get(5,"")
+        if spl.get(6, None):
+            jsn["organisation"]  = spl.get(6,"")
+        if spl.get(7, None):
+            jsn["gatuadress"]    = spl.get(7,"")
+        if spl.get(8, None):
+            jsn["postadress"]    = spl.get(8,"")
+        if spl.get(9, None):
+            jsn["land"]          = spl.get(9,"")
+        if spl.get(10, None):
+            jsn["distrubution"]  = spl.get(10,"")
+        if spl.get(11, None):
+            jsn["hemtelefon"]    = spl.get(11,"")
+        if spl.get(12, None):
+            jsn["arbtelefon"]    = spl.get(12,"")
+        if spl.get(13, None):
+            jsn["ppn"]           = spl.get(13,"")
+        if spl.get(14, None):
+            jsn["användarnamn"]  = spl.get(14,"")
+        if spl.get(15, None):
+            jsn["mailadress"]    = spl.get(15,"")
+
+        if spl.get(16, None):
+            jsn["betalt"]        = int(spl.get(16,0))
+
+        if spl.get(17, None):
+            jsn["inträdesdatum"] = spl.get(17,"")
+        if spl.get(18, None):
+            jsn["utträdesdatum"] = spl.get(18,"")
+
+        if spl.get(19, None):
+            rest = []
+            for status in spl[19].split(","):
+                ss = status.strip()
+                if ss == "Epost-kallelse":
+                    jsn['Epost-kallelse'] = True
+                elif ss == "Ny":
+                    jsn['Ny'] = True
+                elif ss == "Hallnyckel":
+                    jsn['Hallnyckel'] = True
+                elif ss == "Hedersmedlem":
+                    jsn['Hedersmedlem'] = True
+                elif ss == "Fel adress":
+                    jsn['Fel_adress'] = True
+                elif ss == "Slutat":
+                    jsn['Slutat'] = True
+                elif ss == "Utesluten":
+                    jsn['Utesluten'] = True
+                else:
+                    rest.append(ss)
+
+            if rest:
+                jsn["status"]        = ",".join(rest)
+
+        if spl.get(20, None):
+            if re.match('^[0-9]+$', spl[20]):
+                jsn["kortnr"]        = int(spl[20])
+            else:
+                jsn["kortstatus"]    = spl[20]
+
+        people.append(jsn)
+    i+=1
+
+print(json.dumps(people,indent=4, sort_keys=True, ensure_ascii=False))
