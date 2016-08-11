@@ -1,0 +1,83 @@
+#!/bin/bash
+# vim: ts=4 sw=4 expandtab
+
+# POC - Make a user, never tested
+
+abort() {
+    echo "ABORT: $@"
+    exit 1
+}
+
+log() {
+    echo "> $@"
+}
+
+check_cmd() {
+    local cmd=$1; shift
+    type $cmd > /dev/null 2>&1 || abort "$@"
+}
+
+check_cmd make "Install GNU Make"
+check_cmd kadmin "Install Herimdal Kerberos"
+check_cmd python3 "You need python 3"
+check_cmd co "You need RCS installed"
+check_cmd pts "You need to install OpenAFS"
+check_cmd fs "You need to install OpenAFS"
+
+if ! make -v | grep -q "GNU Make"; then
+    abort "Make is not GNU Make"
+fi
+
+if ! kadmin -v 2>&1 | grep -q "Heimdal"; then
+    abort "kadmin is not a Heimdal Kerberos"
+fi
+
+if [[ $(klist | grep Principal:) != */admin@STACKEN.KTH.SE ]]; then
+    abort "You need admin credentials"
+fi
+
+[ ! -e /afs ] && abort "You need to install OpenAFS"
+[ ! -e /afs/stacken.kth.se/admin ] && abort "Not connected to Stackens cell"
+
+[ -z "$2" ] && abort "usage: $0 <new-users-name> \"<full name>\""
+
+log "Query finger.json for $1"
+./query_finger -u $1 || abort "User missing from finger.json, place" \
+    "add it and run this script again"
+
+log "Check for $1 in KDC"
+if echo get $1 | kadmin | grep -q "$1@STACKEN.KTH.SE"; then
+    abort "Principal $1 exists in KDC, abort!"
+fi
+
+log "Add $1 to KDC"
+kadmin add \
+    --max-ticket-life="10 hours" \
+    --max-renewable-life=unlimited \
+    --expiration-time="$(date +%Y --date="2 years")-03-15" \
+    --pw-expiration-time=never \
+    --attributes="requires-pre-auth, disallow-postdated" \
+    --policy=default \
+    $1
+
+cd /afs/stacken.kth.se/admin/passwd/
+grep -qE "^$1" master.passwd && abort "User $1 is already part of master.passwd"
+
+next_passwd_uid() {
+    for n in $(seq 18000 19000); do
+        if ! grep -q $n master.passwd; then
+            echo $n
+            break
+        fi
+    done
+}
+
+PASSWD_UID=$(next_passwd_uid)
+log "Add $1 ($2) to master.passwd with UID $PASSWD_UID"
+co -u master.passwd
+echo "$1:*:$PASSWD_UID:30::0:0:$2:/afs/stacken.kth.se/home/$1:/bin/bash" \
+    >> master.passwd
+ci -l -m "Added user $1 ($2) with $0" master.passwd
+
+log "Setup AFS volume"
+# TODO
