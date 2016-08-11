@@ -42,8 +42,8 @@ fi
 [ -z "$2" ] && abort "usage: $0 <new-users-name> \"<full name>\""
 
 log "Query finger.json for $1"
-./query_finger -u $1 || abort "User missing from finger.json, place" \
-    "add it and run this script again"
+./query_finger -u $1 || abort "User missing from finger.json, " \
+    "add it and run this script again."
 
 log "Check for $1 in KDC"
 if echo get $1 | kadmin | grep -q "$1@STACKEN.KTH.SE"; then
