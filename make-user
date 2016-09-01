@@ -1,8 +1,6 @@
 #!/bin/bash
 # vim: ts=4 sw=4 expandtab
 
-# POC - Make a user, never tested
-
 abort() {
     echo -e "ABORT: $@"
     exit 1
