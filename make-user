@@ -4,7 +4,7 @@
 # POC - Make a user, never tested
 
 abort() {
-    echo "ABORT: $@"
+    echo -e "ABORT: $@"
     exit 1
 }
 
@@ -47,21 +47,18 @@ log "Query finger.json for $1"
 
 log "Check for $1 in KDC"
 if echo get $1 | kadmin | grep -q "$1@STACKEN.KTH.SE"; then
-    abort "Principal $1 exists in KDC, abort!"
+    log "Principal $1 exists in KDC, ignore"
+else
+    log "Add $1 to KDC"
+    kadmin add \
+        --max-ticket-life="10 hours" \
+        --max-renewable-life=unlimited \
+        --expiration-time="$(date +%Y --date="2 years")-03-15" \
+        --pw-expiration-time=never \
+        --attributes="requires-pre-auth, disallow-postdated" \
+        --policy=default \
+        $1
 fi
-
-log "Add $1 to KDC"
-kadmin add \
-    --max-ticket-life="10 hours" \
-    --max-renewable-life=unlimited \
-    --expiration-time="$(date +%Y --date="2 years")-03-15" \
-    --pw-expiration-time=never \
-    --attributes="requires-pre-auth, disallow-postdated" \
-    --policy=default \
-    $1
-
-cd /afs/stacken.kth.se/admin/passwd/
-grep -qE "^$1" master.passwd && abort "User $1 is already part of master.passwd"
 
 next_passwd_uid() {
     for n in $(seq 18000 19000); do
@@ -72,13 +69,28 @@ next_passwd_uid() {
     done
 }
 
-PASSWD_UID=$(next_passwd_uid)
-log "Add $1 ($2) to master.passwd with UID $PASSWD_UID"
-[ -z $PASSWD_UID ] && abort "No free UID found"
-co -u master.passwd
-echo "$1:*:$PASSWD_UID:30::0:0:$2:/afs/stacken.kth.se/home/$1:/bin/bash" \
-    >> master.passwd
-ci -l -m "Added user $1 ($2) with $0" master.passwd
+cd /afs/stacken.kth.se/admin/passwd/
+if grep -qE "^$1" master.passwd; then
+    log "User $1 is already part of master.passwd"
+else
+    PASSWD_UID=$(next_passwd_uid)
+    log "Add $1 ($2) to master.passwd with UID $PASSWD_UID"
+    [ -z $PASSWD_UID ] && abort "No free UID found"
+    co -u master.passwd
+    echo "$1:*:$PASSWD_UID:30::0:0:$2:/afs/stacken.kth.se/home/$1:/bin/bash" \
+        >> master.passwd
+    ci -l -m "Added user $1 ($2) with $0" master.passwd
+    log "Build database"
+    make
+fi
 
 log "Setup AFS volume"
-# TODO
+
+if [ -e "/afs/stacken.kth.se/home/$1" ]; then
+    log "Home dir for user $1 exists"
+else
+    /afs/stacken.kth.se/src/script/createuser $1 beef.stacken.kth.se vicepa
+    vos release home
+fi
+
+log "Looks good, all done!"

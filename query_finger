@@ -5,7 +5,7 @@ import json
 import sys
 from optparse import OptionParser
 
-finger = "/afs/stacken.kth.se/home/stacken/Private/finger.json"
+finger = "/afs/stacken.kth.se/home/stacken/Private/finger_txt/finger.json"
 
 fd = open(finger, 'r')
 data = json.load(fd)
