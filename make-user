@@ -16,7 +16,7 @@ check_cmd() {
 }
 
 check_cmd make "Install GNU Make"
-check_cmd kadmin "Install Herimdal Kerberos"
+check_cmd kadmin "Install Heimdal Kerberos"
 check_cmd python3 "You need python 3"
 check_cmd co "You need RCS installed"
 check_cmd pts "You need to install OpenAFS"
