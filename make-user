@@ -44,11 +44,11 @@ log "Query finger.json for $1"
     "add it and run this script again."
 
 log "Check for $1 in KDC"
-if echo get $1 | kadmin | grep -q "$1@STACKEN.KTH.SE"; then
+if echo get $1 | kadmin -r STACKEN.KTH.SE | grep -q "$1@STACKEN.KTH.SE"; then
     log "Principal $1 exists in KDC, ignore"
 else
     log "Add $1 to KDC"
-    kadmin add \
+    kadmin -r STACKEN.KTH.SE add \
         --max-ticket-life="10 hours" \
         --max-renewable-life=unlimited \
         --expiration-time="$(date +%Y --date="2 years")-03-15" \
