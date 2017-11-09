@@ -88,7 +88,7 @@ if [ -e "/afs/stacken.kth.se/home/$1" ]; then
     log "Home dir for user $1 exists"
 else
     /afs/stacken.kth.se/src/script/createuser $1 beef.stacken.kth.se vicepa
-    vos release home
+    vos release home -c stacken.kth.se
 fi
 
 log "Looks good, all done!"
