@@ -74,10 +74,10 @@ else
     PASSWD_UID=$(next_passwd_uid)
     log "Add $1 ($2) to master.passwd with UID $PASSWD_UID"
     [ -z $PASSWD_UID ] && abort "No free UID found"
-    co -u master.passwd
+    co -l master.passwd
     echo "$1:*:$PASSWD_UID:30::0:0:$2:/afs/stacken.kth.se/home/$1:/bin/bash" \
         >> master.passwd
-    ci -l -m "Added user $1 ($2) with $0" master.passwd
+    ci -u -m "Added user $1 ($2) with $0" master.passwd
     log "Build database"
     make
 fi
